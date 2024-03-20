@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Interactive Mapbox Map with Custom Popups</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    .mapboxgl-popup-content {
+      font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+      max-width: none;
+    }
+    .popup-title {
+      font-size: 16px;
+      margin: 0;
+    }
+    .popup-title a {
+      text-decoration: none;
+      color: #007cbf;
+    }
+    .popup-image {
+      width: 200px;
+      margin-top: 5px;
+    }
+    .popup-image a img {
+      width: 100%;
+      height: auto;
+      border: none;
+    }
+    .popup-description {
+      margin: 10px 0;
+      font-weight: normal;
+    }
+    .popup-price {
+      font-size: 150%;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .popup-price-basis {
+      display: block;
+      margin: 5px 0;
+      font-weight: normal;
+    }
+    .popup-review {
+      font-size: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoidGhldW50YWtlbm5hbWUiLCJhIjoiY2xmcXNlNzdiMDFqbzNzbzlzbnR6NnAxaCJ9.OCZx63m0bXvFBvB0PrVvsw';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/theuntakenname/cltzpntkf00j501qs81tf2lwe',
+      center: [24.9375, -28.5595],
+      zoom: 5.5
+    });
+
+    map.on('load', function() {
+      // Get the layer ID of the points layer you want to add popups to
+      const layerId = 'sngeo-json';
+
+      // Add a click event listener on the points layer
+      map.on('click', layerId, function(e) {
+        // Check if the feature exists
+        if (e.features.length > 0) {
+          var coordinates = e.features[0].geometry.coordinates.slice();
+          var properties = e.features[0].properties;
+          // Ensure the popup appears above the point
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+          // Create the HTML content for the popup
+          var popupContent = `
+            <h2 class="popup-title"><a href="${properties.url}" target="_blank">${properties.title}</a></h2>
+            <div class="popup-image"><a href="${properties.url}" target="_blank"><img src="${properties.image}" alt="Image for ${properties.title}"></a></div>
+            <div class="popup-description">${properties.description}</div>
+            <div class="popup-price">${properties.price}</div>
+            <span class="popup-price-basis">${properties['price-basis']}</span>
+            <div class="popup-review">Rating: ${properties['review-score']} (${properties['review-count']} reviews)</div>
+          `;
+          // Create and attach the popup to the map
+          new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(popupContent)
+            .addTo(map);
+        } else {
+          console.error('No features found.');
+        }
+      });
+
+      // Change the cursor to a pointer when over the points layer
+      map.on('mouseenter', layerId, function() {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', layerId, function() {
+        map.getCanvas().style.cursor = '';
+      });
+    });
+  </script>
+</body>
+</html>
